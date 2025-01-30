@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake in a Banner</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f8ff;
+            margin: 0;
+            overflow: hidden;
+        }
+        #banner {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background-color: #FFD700; /* Gold color */
+            border: 5px solid #654321;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .snake-segment {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #FF4500;
+            border-radius: 50%;
+            opacity: 1;
+            transition: left 0.1s ease, top 0.1s ease, opacity 0.5s ease;
+        }
+        #text-container {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+        .char {
+            display: inline-block;
+            opacity: 0;
+            animation: fadeIn 2s forwards;
+            font-size: calc(200px * 2 / 3); /* Font size is two-thirds of the banner height */
+            font-family: 'Arial', sans-serif;
+            color: red; /* Fill color for the characters */
+            -webkit-text-stroke: 2px white; /* Outline for the characters to make them hollow */
+            text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white; /* Create outline */
+            letter-spacing: calc((100% - (4 * calc(200px * 2 / 3))) / 5); /* Adjust spacing to fit the banner width */
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="banner">
+        <div id="text-container"></div>
+    </div>
+
+    <script>
+        const banner = document.getElementById('banner');
+        const rect = banner.getBoundingClientRect();
+        const snakeSegments = [];
+        let snakeLength = 10;
+        let lastPosition = { x: rect.width / 2, y: rect.height / 2 };
+        let positions = [];
+        let timeoutId;
+
+        function createSnakeSegment(x, y, opacity) {
+            const segment = document.createElement('div');
+            segment.classList.add('snake-segment');
+            segment.style.left = `${x}px`;
+            segment.style.top = `${y}px`;
+            segment.style.opacity = opacity;
+            banner.appendChild(segment);
+            return segment;
+        }
+
+        function moveSnake(event) {
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            // Add the new position to the front of the array
+            positions.unshift({ x, y });
+
+            // Limit the number of stored positions to the length of the snake
+            if (positions.length > snakeLength) {
+                positions.pop();
+            }
+
+            // Update segments based on stored positions
+            positions.forEach((pos, index) => {
+                const segment = snakeSegments[index];
+                if (!segment) {
+                    // Create new segment if it doesn't exist yet
+                    const newSegment = createSnakeSegment(pos.x, pos.y, 1 - (index / snakeLength));
+                    snakeSegments.push(newSegment);
+                } else {
+                    // Update existing segment
+                    segment.style.left = `${pos.x}px`;
+                    segment.style.top = `${pos.y}px`;
+                    segment.style.opacity = 1 - (index / snakeLength);
+                }
+            });
+
+            // Remove excess segments if any
+            while (snakeSegments.length > positions.length) {
+                const tail = snakeSegments.pop();
+                tail.remove();
+            }
+
+            // Clear previous timeout and set a new one
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(showText, 1000); // Show text after 1 second of no mouse movement
+        }
+
+        function showText() {
+            const textContainer = document.getElementById('text-container');
+            textContainer.innerHTML = '';
+            textContainer.style.opacity = 1;
+
+            const chars = ['欢', '迎', '光', '临'];
+            chars.forEach((char, index) => {
+                const charElement = document.createElement('span');
+                charElement.textContent = char;
+                charElement.classList.add('char');
+                charElement.style.animationDelay = `${index * 0.5}s`; // Staggered appearance
+                textContainer.appendChild(charElement);
+            });
+        }
+
+        banner.addEventListener('mousemove', moveSnake);
+    </script>
+</body>
+</html>
